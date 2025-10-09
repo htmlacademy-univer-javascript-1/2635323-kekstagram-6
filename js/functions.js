@@ -13,3 +13,7 @@ const isPalindrome = function (string) {
 
   return normalizedString === reversedString;
 };
+
+checkStringLength('проверяемая строка', 10);
+
+isPalindrome('топот');
