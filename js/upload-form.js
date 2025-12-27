@@ -5,6 +5,7 @@ import { initEffectsAndScale } from './effects-and-scale.js';
 const MAX_HASHTAG_COUNT = 5;
 const MAX_COMMENT_LENGTH = 140;
 const HASHTAG_PATTERN = /^#[a-zа-яё0-9]{1,19}$/i;
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
 const form = document.querySelector('.img-upload__form');
 const fileField = form.querySelector('.img-upload__input');
@@ -19,6 +20,7 @@ const scaleBiggerButton = form.querySelector('.scale__control--bigger');
 const scaleValueInput = form.querySelector('.scale__control--value');
 
 const previewImg = form.querySelector('.img-upload__preview img');
+const effectsPreviewItems = form.querySelectorAll('.effects__preview');
 
 const effectsContainer = form.querySelector('.effects');
 const effectLevelContainer = form.querySelector('.img-upload__effect-level');
@@ -99,6 +101,28 @@ const onDocumentKeydown = (evt) => {
   }
 };
 
+let previewObjectUrl = null;
+
+const isValidFileType = (file) => {
+  const fileName = file.name.toLowerCase();
+  return FILE_TYPES.some((ext) => fileName.endsWith(ext));
+};
+
+const setPreviewImage = (file) => {
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = null;
+  }
+
+  previewObjectUrl = URL.createObjectURL(file);
+
+  previewImg.src = previewObjectUrl;
+
+  effectsPreviewItems.forEach((item) => {
+    item.style.backgroundImage = `url(${previewObjectUrl})`;
+  });
+};
+
 const openOverlay = () => {
   overlay.classList.remove('hidden');
   body.classList.add('modal-open');
@@ -112,6 +136,11 @@ const resetFormFull = () => {
   pristine.reset();
   fileField.value = '';
   editor.resetAll();
+
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = null;
+  }
 };
 
 function closeOverlay(doReset) {
@@ -125,9 +154,18 @@ function closeOverlay(doReset) {
 }
 
 fileField.addEventListener('change', () => {
-  if (fileField.files.length > 0) {
-    openOverlay();
+  const file = fileField.files && fileField.files[0];
+  if (!file) {
+    return;
   }
+
+  if (!isValidFileType(file)) {
+    fileField.value = '';
+    return;
+  }
+
+  setPreviewImage(file);
+  openOverlay();
 });
 
 cancelButton.addEventListener('click', (evt) => {
