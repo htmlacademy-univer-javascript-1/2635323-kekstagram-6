@@ -1,5 +1,6 @@
 import { renderPhotos } from './render-pictures.js';
 import { getData } from './api.js';
+import { initFilters } from './filters.js';
 import './upload-form.js';
 
 const showLoadError = () => {
@@ -17,6 +18,7 @@ const showLoadError = () => {
 getData()
   .then((photos) => {
     renderPhotos(photos);
+    initFilters(photos);
   })
   .catch(() => {
     showLoadError();
