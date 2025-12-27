@@ -1,7 +1,7 @@
 import { renderPhotos } from './render-pictures.js';
 import { getData } from './api.js';
-import { initFilters } from './filters.js';
 import './upload-form.js';
+import { showFilters, initFilters } from './filters.js';
 
 const showLoadError = () => {
   const errorBlock = document.createElement('div');
@@ -18,6 +18,7 @@ const showLoadError = () => {
 getData()
   .then((photos) => {
     renderPhotos(photos);
+    showFilters();
     initFilters(photos);
   })
   .catch(() => {
