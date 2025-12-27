@@ -5,6 +5,7 @@ import { showFilters, initFilters } from './filters.js';
 
 const showLoadError = () => {
   const errorBlock = document.createElement('div');
+  errorBlock.classList.add('data-error');
   errorBlock.style.padding = '10px';
   errorBlock.style.margin = '10px auto';
   errorBlock.style.maxWidth = '600px';
@@ -21,6 +22,4 @@ getData()
     showFilters();
     initFilters(photos);
   })
-  .catch(() => {
-    showLoadError();
-  });
+  .catch(showLoadError);

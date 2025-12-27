@@ -1,107 +1,53 @@
 import { sendData } from './api.js';
 import { showSuccessMessage, showErrorMessage } from './messages.js';
 import { initEffectsAndScale } from './effects-and-scale.js';
+import { initUploadFormValidation } from './upload-form-validation.js';
+import { isEscapeKey } from './util.js';
 
-const MAX_HASHTAG_COUNT = 5;
-const MAX_COMMENT_LENGTH = 140;
-const HASHTAG_PATTERN = /^#[a-zа-яё0-9]{1,19}$/i;
 const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
-const form = document.querySelector('.img-upload__form');
-const fileField = form.querySelector('.img-upload__input');
-const overlay = form.querySelector('.img-upload__overlay');
-const cancelButton = form.querySelector('.img-upload__cancel');
-const hashtagsField = form.querySelector('.text__hashtags');
-const commentField = form.querySelector('.text__description');
-const submitButton = form.querySelector('.img-upload__submit');
+const formElement = document.querySelector('.img-upload__form');
+const fileFieldElement = formElement.querySelector('.img-upload__input');
+const overlayElement = formElement.querySelector('.img-upload__overlay');
+const cancelButtonElement = formElement.querySelector('.img-upload__cancel');
+const hashtagsFieldElement = formElement.querySelector('.text__hashtags');
+const commentFieldElement = formElement.querySelector('.text__description');
+const submitButtonElement = formElement.querySelector('.img-upload__submit');
 
-const scaleSmallerButton = form.querySelector('.scale__control--smaller');
-const scaleBiggerButton = form.querySelector('.scale__control--bigger');
-const scaleValueInput = form.querySelector('.scale__control--value');
+const scaleSmallerButtonElement = formElement.querySelector('.scale__control--smaller');
+const scaleBiggerButtonElement = formElement.querySelector('.scale__control--bigger');
+const scaleValueInputElement = formElement.querySelector('.scale__control--value');
 
-const previewImg = form.querySelector('.img-upload__preview img');
-const effectsPreviewItems = form.querySelectorAll('.effects__preview');
+const previewImgElement = formElement.querySelector('.img-upload__preview img');
+const effectsPreviewItemsElements = formElement.querySelectorAll('.effects__preview');
 
-const effectsContainer = form.querySelector('.effects');
-const effectLevelContainer = form.querySelector('.img-upload__effect-level');
-const effectSliderElement = effectLevelContainer.querySelector('.effect-level__slider');
-const effectLevelValueInput = effectLevelContainer.querySelector('.effect-level__value');
+const effectsContainerElement = formElement.querySelector('.effects');
+const effectLevelContainerElement = formElement.querySelector('.img-upload__effect-level');
+const effectSliderElement = effectLevelContainerElement.querySelector('.effect-level__slider');
+const effectLevelValueInputElement = effectLevelContainerElement.querySelector('.effect-level__value');
 
-const body = document.body;
+const bodyElement = document.body;
 
 const editor = initEffectsAndScale({
-  form,
-  previewImg,
-  scaleSmallerButton,
-  scaleBiggerButton,
-  scaleValueInput,
-  effectsContainer,
-  effectLevelContainer,
+  formElement,
+  previewImgElement,
+  scaleSmallerButtonElement,
+  scaleBiggerButtonElement,
+  scaleValueInputElement,
+  effectsContainerElement,
+  effectLevelContainerElement,
   effectSliderElement,
-  effectLevelValueInput,
+  effectLevelValueInputElement,
 });
 
-const pristine = new Pristine(form, {
-  classTo: 'img-upload__field-wrapper',
-  errorClass: 'img-upload__field-wrapper--invalid',
-  successClass: 'img-upload__field-wrapper--valid',
-  errorTextParent: 'img-upload__field-wrapper',
-  errorTextTag: 'div',
-  errorTextClass: 'img-upload__error',
+const pristine = initUploadFormValidation({
+  formElement,
+  hashtagsFieldElement,
+  commentFieldElement,
 });
-
-const getHashtagsArray = (value) =>
-  value
-    .trim()
-    .split(/\s+/)
-    .filter((tag) => tag.length > 0);
-
-const checkHashtagFormat = (value) => {
-  if (!value.trim()) {
-    return true;
-  }
-  const hashtags = getHashtagsArray(value);
-  return hashtags.every((tag) => HASHTAG_PATTERN.test(tag));
-};
-
-const checkHashtagCount = (value) => {
-  if (!value.trim()) {
-    return true;
-  }
-  return getHashtagsArray(value).length <= MAX_HASHTAG_COUNT;
-};
-
-const checkHashtagUnique = (value) => {
-  if (!value.trim()) {
-    return true;
-  }
-  const hashtags = getHashtagsArray(value).map((t) => t.toLowerCase());
-  return new Set(hashtags).size === hashtags.length;
-};
-
-pristine.addValidator(hashtagsField, checkHashtagFormat, 'Неверный хэш-тег');
-pristine.addValidator(hashtagsField, checkHashtagCount, 'Нельзя больше 5 хэш-тегов');
-pristine.addValidator(hashtagsField, checkHashtagUnique, 'Хэш-теги не должны повторяться');
-
-const validateComment = (value) => value.length <= MAX_COMMENT_LENGTH;
-pristine.addValidator(commentField, validateComment, 'Комментарий максимум 140 символов');
-
-const stopEscPropagation = (evt) => {
-  if (evt.key === 'Escape') {
-    evt.stopPropagation();
-  }
-};
-hashtagsField.addEventListener('keydown', stopEscPropagation);
-commentField.addEventListener('keydown', stopEscPropagation);
-
-const onDocumentKeydown = (evt) => {
-  if (evt.key === 'Escape') {
-    evt.preventDefault();
-    closeOverlay(true);
-  }
-};
 
 let previewObjectUrl = null;
+let onDocumentKeydown = null;
 
 const isValidFileType = (file) => {
   const fileName = file.name.toLowerCase();
@@ -111,96 +57,114 @@ const isValidFileType = (file) => {
 const setPreviewImage = (file) => {
   if (previewObjectUrl) {
     URL.revokeObjectURL(previewObjectUrl);
-    previewObjectUrl = null;
   }
 
   previewObjectUrl = URL.createObjectURL(file);
+  previewImgElement.src = previewObjectUrl;
 
-  previewImg.src = previewObjectUrl;
-
-  effectsPreviewItems.forEach((item) => {
-    item.style.backgroundImage = `url(${previewObjectUrl})`;
+  effectsPreviewItemsElements.forEach((itemElement) => {
+    itemElement.style.backgroundImage = `url(${previewObjectUrl})`;
   });
 };
 
-const openOverlay = () => {
-  overlay.classList.remove('hidden');
-  body.classList.add('modal-open');
-  document.addEventListener('keydown', onDocumentKeydown);
-
-  editor.resetAll();
-};
-
-const resetFormFull = () => {
-  form.reset();
-  pristine.reset();
-  fileField.value = '';
-  editor.resetAll();
-
+const resetPreviewUrl = () => {
   if (previewObjectUrl) {
     URL.revokeObjectURL(previewObjectUrl);
     previewObjectUrl = null;
   }
 };
 
-function closeOverlay(doReset) {
-  overlay.classList.add('hidden');
-  body.classList.remove('modal-open');
-  document.removeEventListener('keydown', onDocumentKeydown);
+const resetFormState = () => {
+  formElement.reset();
+  pristine.reset();
+  editor.resetAll();
+  editor.clearStyles();
+  resetPreviewUrl();
+};
 
-  if (doReset) {
-    resetFormFull();
+const closeOverlay = ({ reset = false } = {}) => {
+  overlayElement.classList.add('hidden');
+  bodyElement.classList.remove('modal-open');
+
+  if (onDocumentKeydown) {
+    document.removeEventListener('keydown', onDocumentKeydown);
+    onDocumentKeydown = null;
   }
-}
 
-fileField.addEventListener('change', () => {
-  const file = fileField.files && fileField.files[0];
+  if (reset) {
+    resetFormState();
+    fileFieldElement.value = '';
+  }
+};
+
+const openOverlay = () => {
+  overlayElement.classList.remove('hidden');
+  bodyElement.classList.add('modal-open');
+
+  onDocumentKeydown = (evt) => {
+    if (!isEscapeKey(evt)) {
+      return;
+    }
+
+    if (document.querySelector('.success') || document.querySelector('.error')) {
+      return;
+    }
+
+    evt.preventDefault();
+    closeOverlay({ reset: true });
+  };
+
+  document.addEventListener('keydown', onDocumentKeydown);
+};
+
+const onFileFieldChange = () => {
+  const file = fileFieldElement.files && fileFieldElement.files[0];
   if (!file) {
     return;
   }
 
   if (!isValidFileType(file)) {
-    fileField.value = '';
+    fileFieldElement.value = '';
     return;
   }
 
   setPreviewImage(file);
+  editor.resetAll();
   openOverlay();
-});
+};
 
-cancelButton.addEventListener('click', (evt) => {
+const onCancelButtonClick = (evt) => {
   evt.preventDefault();
-  closeOverlay(true);
-});
-
-const blockSubmit = () => {
-  submitButton.disabled = true;
-  submitButton.textContent = 'Отправляю...';
+  closeOverlay({ reset: true });
 };
 
-const unblockSubmit = () => {
-  submitButton.disabled = false;
-  submitButton.textContent = 'Опубликовать';
+const setSubmitBlocked = (isBlocked) => {
+  submitButtonElement.disabled = isBlocked;
+  submitButtonElement.textContent = isBlocked ? 'Отправляю...' : 'Опубликовать';
 };
 
-form.addEventListener('submit', (evt) => {
+const onFormSubmit = (evt) => {
   evt.preventDefault();
 
   if (!pristine.validate()) {
     return;
   }
 
-  blockSubmit();
+  setSubmitBlocked(true);
 
-  sendData(new FormData(form))
+  sendData(new FormData(formElement))
     .then(() => {
-      closeOverlay(true);
+      closeOverlay({ reset: true });
       showSuccessMessage();
     })
     .catch(() => {
       showErrorMessage();
     })
     .finally(() => {
-      unblockSubmit();
+      setSubmitBlocked(false);
     });
-});
+};
+
+fileFieldElement.addEventListener('change', onFileFieldChange);
+cancelButtonElement.addEventListener('click', onCancelButtonClick);
+formElement.addEventListener('submit', onFormSubmit);

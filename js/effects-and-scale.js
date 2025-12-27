@@ -45,21 +45,21 @@ const EffectSettings = {
 };
 
 const initEffectsAndScale = ({
-  form,
-  previewImg,
-  scaleSmallerButton,
-  scaleBiggerButton,
-  scaleValueInput,
-  effectsContainer,
-  effectLevelContainer,
+  formElement,
+  previewImgElement,
+  scaleSmallerButtonElement,
+  scaleBiggerButtonElement,
+  scaleValueInputElement,
+  effectsContainerElement,
+  effectLevelContainerElement,
   effectSliderElement,
-  effectLevelValueInput,
+  effectLevelValueInputElement,
 }) => {
-  const getCurrentScale = () => parseInt(scaleValueInput.value, 10);
+  const getCurrentScale = () => parseInt(scaleValueInputElement.value, 10);
 
   const applyScale = (value) => {
-    scaleValueInput.value = `${value}%`;
-    previewImg.style.transform = `scale(${value / 100})`;
+    scaleValueInputElement.value = `${value}%`;
+    previewImgElement.style.transform = `scale(${value / 100})`;
   };
 
   const onSmallerClick = () => {
@@ -72,23 +72,23 @@ const initEffectsAndScale = ({
     applyScale(newValue);
   };
 
-  scaleSmallerButton.addEventListener('click', onSmallerClick);
-  scaleBiggerButton.addEventListener('click', onBiggerClick);
+  scaleSmallerButtonElement.addEventListener('click', onSmallerClick);
+  scaleBiggerButtonElement.addEventListener('click', onBiggerClick);
 
   let currentEffect = EffectSettings.none;
 
-  const hideSlider = () => effectLevelContainer.classList.add('hidden');
-  const showSlider = () => effectLevelContainer.classList.remove('hidden');
+  const hideSlider = () => effectLevelContainerElement.classList.add('hidden');
+  const showSlider = () => effectLevelContainerElement.classList.remove('hidden');
 
   const applyEffectValue = (value) => {
-    effectLevelValueInput.value = value;
+    effectLevelValueInputElement.value = value;
 
     if (currentEffect === EffectSettings.none) {
-      previewImg.style.filter = 'none';
+      previewImgElement.style.filter = 'none';
       return;
     }
 
-    previewImg.style.filter = currentEffect.getStyle(value);
+    previewImgElement.style.filter = currentEffect.getStyle(value);
   };
 
   noUiSlider.create(effectSliderElement, {
@@ -110,8 +110,8 @@ const initEffectsAndScale = ({
     currentEffect = EffectSettings[effectName];
 
     if (currentEffect === EffectSettings.none) {
-      previewImg.style.filter = 'none';
-      effectLevelValueInput.value = '';
+      previewImgElement.style.filter = 'none';
+      effectLevelValueInputElement.value = '';
       hideSlider();
       return;
     }
@@ -127,11 +127,11 @@ const initEffectsAndScale = ({
       step: currentEffect.step,
     });
 
-    previewImg.style.filter = currentEffect.getStyle(currentEffect.max);
-    effectLevelValueInput.value = currentEffect.max;
+    previewImgElement.style.filter = currentEffect.getStyle(currentEffect.max);
+    effectLevelValueInputElement.value = currentEffect.max;
   };
 
-  effectsContainer.addEventListener('change', (evt) => {
+  effectsContainerElement.addEventListener('change', (evt) => {
     if (!evt.target.classList.contains('effects__radio')) {
       return;
     }
@@ -139,14 +139,14 @@ const initEffectsAndScale = ({
   });
 
   const resetEffects = () => {
-    const defaultEffectRadio = form.querySelector('#effect-none');
-    if (defaultEffectRadio) {
-      defaultEffectRadio.checked = true;
+    const defaultEffectRadioElement = formElement.querySelector('#effect-none');
+    if (defaultEffectRadioElement) {
+      defaultEffectRadioElement.checked = true;
     }
 
     currentEffect = EffectSettings.none;
-    previewImg.style.filter = 'none';
-    effectLevelValueInput.value = '';
+    previewImgElement.style.filter = 'none';
+    effectLevelValueInputElement.value = '';
     hideSlider();
   };
 
@@ -166,8 +166,8 @@ const initEffectsAndScale = ({
     resetScale,
     resetEffects,
     clearStyles: () => {
-      previewImg.style.transform = '';
-      previewImg.style.filter = '';
+      previewImgElement.style.transform = '';
+      previewImgElement.style.filter = '';
     },
   };
 };
