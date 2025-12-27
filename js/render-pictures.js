@@ -2,7 +2,11 @@ import { openBigPicture } from './big-picture.js';
 
 const picturesContainer = document.querySelector('.pictures');
 const pictureTemplate = document.querySelector('#picture').content.querySelector('.picture');
-const fragment = document.createDocumentFragment();
+
+const clearPhotos = () => {
+  const pictures = picturesContainer.querySelectorAll('.picture');
+  pictures.forEach((picture) => picture.remove());
+};
 
 const createThumbnail = (picture) => {
   const { url, description, likes, comments } = picture;
@@ -22,11 +26,14 @@ const createThumbnail = (picture) => {
 };
 
 const renderPhotos = (photoList) => {
+  clearPhotos();
+
+  const fragment = document.createDocumentFragment();
   photoList.forEach((item) => {
     fragment.appendChild(createThumbnail(item));
   });
+
   picturesContainer.appendChild(fragment);
 };
 
 export { renderPhotos };
-
