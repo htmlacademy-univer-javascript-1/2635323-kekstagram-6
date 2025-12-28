@@ -4,6 +4,8 @@ const getRandomInteger = (a, b) => {
   return Math.floor(Math.random() * (upper - lower + 1)) + lower;
 };
 
+const isEscapeKey = (evt) => evt.key === 'Escape';
+
 const debounce = (callback, timeoutDelay = 500) => {
   let timeoutId;
 
@@ -14,8 +16,6 @@ const debounce = (callback, timeoutDelay = 500) => {
     }, timeoutDelay);
   };
 };
-
-const isEscapeKey = (evt) => evt.key === 'Escape';
 
 export {
   getRandomInteger,
