@@ -1,78 +1,64 @@
-import { isEscapeKey } from './util.js';
+const successTemplate = document.querySelector('#success').content.querySelector('.success');
+const errorTemplate = document.querySelector('#error').content.querySelector('.error');
 
-const successTemplateElement = document
-  .querySelector('#success')
-  .content
-  .querySelector('.success');
+const isEscapeKey = (evt) => evt.key === 'Escape';
 
-const errorTemplateElement = document
-  .querySelector('#error')
-  .content
-  .querySelector('.error');
+let currentMessage = null;
 
-let currentMessageElement = null;
-let onDocumentKeydown = null;
-let onDocumentClick = null;
+const removeMessage = (messageElement) => {
+  messageElement.remove();
+  document.removeEventListener('keydown', onDocumentKeydown, true);
+  document.removeEventListener('click', onDocumentClick, true);
+};
 
-const hideMessage = () => {
-  if (!currentMessageElement) {
+function onDocumentKeydown(evt) {
+  if (!currentMessage) {
     return;
   }
 
-  currentMessageElement.remove();
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    evt.stopPropagation();
 
-  if (onDocumentKeydown) {
-    document.removeEventListener('keydown', onDocumentKeydown, true);
+    removeMessage(currentMessage);
+    currentMessage = null;
   }
-  if (onDocumentClick) {
-    document.removeEventListener('click', onDocumentClick, true);
+}
+
+function onDocumentClick(evt) {
+  if (!currentMessage) {
+    return;
   }
 
-  currentMessageElement = null;
-  onDocumentKeydown = null;
-  onDocumentClick = null;
-};
+  const inner = currentMessage.querySelector('.success__inner, .error__inner');
+  const button = currentMessage.querySelector('button');
 
-const showMessage = (templateElement) => {
-  hideMessage();
+  if (evt.target === button || (inner && !inner.contains(evt.target))) {
+    evt.preventDefault();
+    evt.stopPropagation();
 
-  const messageElement = templateElement.cloneNode(true);
+    removeMessage(currentMessage);
+    currentMessage = null;
+  }
+}
+
+const showMessage = (template) => {
+  if (currentMessage) {
+    removeMessage(currentMessage);
+    currentMessage = null;
+  }
+
+  const messageElement = template.cloneNode(true);
   messageElement.style.zIndex = '10000';
+
   document.body.append(messageElement);
-  currentMessageElement = messageElement;
-
-  onDocumentKeydown = (evt) => {
-    if (isEscapeKey(evt)) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      hideMessage();
-    }
-  };
-
-  onDocumentClick = (evt) => {
-    const innerElement = currentMessageElement
-      ? currentMessageElement.querySelector('.success__inner, .error__inner')
-      : null;
-
-    const buttonElement = currentMessageElement
-      ? currentMessageElement.querySelector('button')
-      : null;
-
-    const isCloseButton = evt.target === buttonElement;
-    const isOutsideInner = innerElement ? !innerElement.contains(evt.target) : true;
-
-    if (isCloseButton || isOutsideInner) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      hideMessage();
-    }
-  };
+  currentMessage = messageElement;
 
   document.addEventListener('keydown', onDocumentKeydown, true);
   document.addEventListener('click', onDocumentClick, true);
 };
 
-const showSuccessMessage = () => showMessage(successTemplateElement);
-const showErrorMessage = () => showMessage(errorTemplateElement);
+const showSuccessMessage = () => showMessage(successTemplate);
+const showErrorMessage = () => showMessage(errorTemplate);
 
 export { showSuccessMessage, showErrorMessage };

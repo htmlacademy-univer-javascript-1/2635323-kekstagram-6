@@ -2,24 +2,23 @@ import { debounce, getRandomInteger } from './util.js';
 import { renderPhotos } from './render-pictures.js';
 
 const FILTER_RANDOM_COUNT = 10;
-const RERENDER_DELAY = 500;
+const DEBOUNCE_DELAY = 500;
 
-const imgFiltersElement = document.querySelector('.img-filters');
-const filtersFormElement = imgFiltersElement.querySelector('.img-filters__form');
+const imgFilters = document.querySelector('.img-filters');
+const form = imgFilters.querySelector('.img-filters__form');
 
 const showFilters = () => {
-  imgFiltersElement.classList.remove('img-filters--inactive');
+  imgFilters.classList.remove('img-filters--inactive');
 };
 
-const setActiveButton = (activeButtonElement) => {
-  filtersFormElement.querySelectorAll('.img-filters__button').forEach((buttonElement) => {
-    buttonElement.classList.remove('img-filters__button--active');
+const setActiveButton = (button) => {
+  form.querySelectorAll('.img-filters__button').forEach((btn) => {
+    btn.classList.remove('img-filters__button--active');
   });
-
-  activeButtonElement.classList.add('img-filters__button--active');
+  button.classList.add('img-filters__button--active');
 };
 
-const getRandomUniquePhotos = (photos, count) => {
+const getRandomUnique = (photos, count) => {
   const result = [];
   const usedIds = new Set();
 
@@ -32,46 +31,40 @@ const getRandomUniquePhotos = (photos, count) => {
       result.push(photo);
     }
   }
-
   return result;
 };
-
-const sortByCommentsDesc = (photos) =>
-  photos.slice().sort((a, b) => b.comments.length - a.comments.length);
 
 const initFilters = (photosFromServer) => {
   const photosDefault = photosFromServer.slice();
 
-  const rerender = debounce((photos) => {
-    renderPhotos(photos);
-  }, RERENDER_DELAY);
+  const rerender = debounce((list) => renderPhotos(list), DEBOUNCE_DELAY);
 
-  const onFiltersFormClick = (evt) => {
-    const buttonElement = evt.target.closest('.img-filters__button');
-    if (!buttonElement) {
+  form.addEventListener('click', (evt) => {
+    const button = evt.target.closest('.img-filters__button');
+    if (!button) {
       return;
     }
 
-    evt.preventDefault();
+    setActiveButton(button);
 
-    setActiveButton(buttonElement);
-
-    switch (buttonElement.id) {
-      case 'filter-default':
-        rerender(photosDefault);
-        break;
-      case 'filter-random':
-        rerender(getRandomUniquePhotos(photosDefault, FILTER_RANDOM_COUNT));
-        break;
-      case 'filter-discussed':
-        rerender(sortByCommentsDesc(photosDefault));
-        break;
-      default:
-        rerender(photosDefault);
+    if (button.id === 'filter-default') {
+      rerender(photosDefault);
+      return;
     }
-  };
 
-  filtersFormElement.addEventListener('click', onFiltersFormClick);
+    if (button.id === 'filter-random') {
+      rerender(getRandomUnique(photosDefault, FILTER_RANDOM_COUNT));
+      return;
+    }
+
+    if (button.id === 'filter-discussed') {
+      const sorted = photosDefault
+        .slice()
+        .sort((a, b) => b.comments.length - a.comments.length);
+
+      rerender(sorted);
+    }
+  });
 };
 
 export { showFilters, initFilters };
